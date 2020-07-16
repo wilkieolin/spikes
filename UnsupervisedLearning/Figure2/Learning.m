@@ -89,7 +89,7 @@ for i=2:TotTime
         end     
     end
     
-    V=(1-lambda*dt)*V + dt*F'*Input(:,mod(i,Ntime)+1)+ O*C(:,k)+0.001*randn(Nneuron,1); %the membrane potential is a leaky integration of the feedforward input and the spikes
+    V=(1-lambda*dt)*V + dt*F'*Input(:,mod(i,Ntime)+1) + O*C(:,k) + 0.001*randn(Nneuron,1); %the membrane potential is a leaky integration of the feedforward input and the spikes
     x=(1-lambda*dt)*x+dt*Input(:,mod(i,Ntime)+1); %filtered input
          
     [m,k]= max(V - Thresh-0.01*randn(Nneuron,1)-0); %finding the neuron with largest membrane potential
