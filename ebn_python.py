@@ -406,14 +406,15 @@ def learn_simple(signal, fwd, rc, params, device="cpu"):
         centered = voltage - threshold - 0.01*torch.nn.init.normal_(noise, mean=0.0, std=1.0)
         info = torch.max(centered, dim=0)
 
-        if (info.values > 0.0):
+        if (info.values >= 0.0):
             spk = 1.0
             ind = info.indices
-            rates[ind] += 1.0
+            
 
             #do the learning
-            fwd[:,ind] += eps_ff*(scale_ff*leaky_input - fwd[:,ind])
-            rc[:,ind] -= eps_rc*(scale_rc*(voltage + quad_cost*rates) + rc[:,ind] + quad_cost*torch.eye(n_neurons, device=device)[:,ind])
+            fwd[:,ind] = fwd[:,ind] + eps_ff*(scale_ff*leaky_input - fwd[:,ind])
+            rc[:,ind] = rc[:,ind] - eps_rc*(scale_rc*(voltage + quad_cost*rates) + rc[:,ind] + quad_cost*torch.eye(n_neurons, device=device)[:,ind])
+            rates[ind] += 1.0
         else:
             spk = 0.0
 
@@ -445,7 +446,7 @@ def run_simple(signal, fwd, rc, params, device="cpu"):
     for i in tqdm(range(n_time-1)):
 
         #updates values
-        voltage[i+1, :] = beta*voltage[i,:] + dt*torch.matmul(fwd.transpose(1,0), signal[i,:]) + spk*rc[:,ind] + 0.001*torch.nn.init.normal_(noise, mean=0.0, std=1.0)
+        voltage[i+1, :] = beta*voltage[i,:] + dt*torch.matmul(fwd.transpose(1,0), signal[i,:]) + torch.matmul(rc, spikes[i,:]) + 0.001*torch.nn.init.normal_(noise, mean=0.0, std=1.0)
 
         centered = voltage[i+1,:] - threshold - 0.01*torch.nn.init.normal_(noise, mean=0.0, std=1.0)
         info = torch.max(centered, dim=0)
